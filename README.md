@@ -26,9 +26,7 @@ An AI-powered assistant for Infor ERP implementation using RAG (Retrieval-Augmen
 - PDF (.pdf)
 
 ## How to Run
-```bash
-# Interactive chat
-python src/chat.py
 
-# Single query test
-python src/agent.py
+### Web Interface (Recommended)
+```bash
+streamlit run src/app.py
