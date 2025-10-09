@@ -13,6 +13,17 @@ An AI-powered assistant for Infor ERP implementation using RAG (Retrieval-Augmen
 - Purchasing and Inventory Management
 - Supplier Approval Workflows
 - Vendor Rebate Configuration
+## Knowledge Base
+- Infor Knowledge (markdown) 
+    - Customer Order Management (markdown)
+    - Purchasing and Inventory Management (markdown)
+- Purchasing Module (PDF)
+- Sales Order Management Module (PDF)
+- Supply Chain Execution Module (PDF)
+
+## Supported Document Types
+- Markdown (.md)
+- PDF (.pdf)
 
 ## How to Run
 ```bash

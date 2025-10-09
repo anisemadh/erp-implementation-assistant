@@ -16,9 +16,10 @@ def test_search(query):
 if __name__ == "__main__":
     # Test with queries relevant to your Infor knowledge
     test_queries = [
-        "How do I configure supplier approval?",
-        "Purchase requisition setup",
-        "Common implementation mistakes"
+        "How do I set up Customer Local Exceptions?",
+        "How do you set up a discount model?",
+        "What is the flow for goods receipts for POs",
+        "What are some common mistakes in the order to cash process?",
     ]
     
     for query in test_queries:
