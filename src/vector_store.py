@@ -6,16 +6,28 @@ import os
 load_dotenv()
 
 def create_vector_store(chunks, persist_directory="data/chroma_db"):
-    """Create and persist vector store"""
+    """Create and persist vector store in batches"""
     embeddings = OpenAIEmbeddings()
     
+    # Process in batches to avoid token limits
+    batch_size = 100  # Process 100 chunks at a time
+    
+    print(f"Processing {len(chunks)} chunks in batches of {batch_size}...")
+    
+    # Create vector store with first batch
     vectorstore = Chroma.from_documents(
-        documents=chunks,
+        documents=chunks[:batch_size],
         embedding=embeddings,
         persist_directory=persist_directory
     )
     
-    print(f"Vector store created with {vectorstore._collection.count()} documents")
+    # Add remaining chunks in batches
+    for i in range(batch_size, len(chunks), batch_size):
+        batch = chunks[i:i + batch_size]
+        print(f"Processing batch {i//batch_size + 1}/{(len(chunks)-1)//batch_size + 1}...")
+        vectorstore.add_documents(batch)
+    
+    print(f"Vector store created with {len(chunks)} documents")
     return vectorstore
 
 def load_vector_store(persist_directory="data/chroma_db"):

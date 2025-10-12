@@ -20,14 +20,15 @@ def load_and_split_documents(file_path):
     return chunks
 
 def load_and_split_pdf(file_path):
-    """Load PDF file and split into chunks"""
+    """Load PDF file and split into larger, better chunks"""
     loader = PyPDFLoader(file_path)
     documents = loader.load()
     
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1000,
-        chunk_overlap=200,
+        chunk_size=2500,      # MUCH LARGER - was 1000
+        chunk_overlap=500,    # MORE OVERLAP - was 200
         length_function=len,
+        separators=["\n\n", "\n", ". ", " ", ""]  # Better sentence boundaries
     )
     
     chunks = text_splitter.split_documents(documents)

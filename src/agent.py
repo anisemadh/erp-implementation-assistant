@@ -41,7 +41,7 @@ class ERPAgent:
         query = state["messages"][-1].content
     
         # Search for relevant documents
-        docs = self.vectorstore.similarity_search(query, k=3)
+        docs = self.vectorstore.similarity_search(query, k=5)
     
         # Combine retrieved documents into context
         context = "\n\n".join([doc.page_content for doc in docs])
