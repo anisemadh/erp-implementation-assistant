@@ -5,6 +5,7 @@ from typing import TypedDict, Annotated, List
 import operator
 from vector_store import load_vector_store
 from dotenv import load_dotenv
+from prompts import build_full_prompt
 
 load_dotenv()
 
@@ -18,7 +19,38 @@ class ERPAgent:
         self.llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
         self.vectorstore = load_vector_store()
         self.graph = self._build_graph()
+    def classify_query_type(self, query: str) -> str:
+        """Classify query to select appropriate prompt"""
+        query_lower = query.lower()
     
+        # Configuration keywords
+        config_keywords = [
+            'configure', 'setup', 'set up', 'create', 'enable', 
+            'how do i', 'how to', 'setting', 'parameter'
+        ]
+    
+        # Troubleshooting keywords
+        trouble_keywords = [
+            'error', 'issue', 'problem', 'not working', 'failed',
+            'stuck', 'why', 'wrong', 'doesn\'t', 'can\'t', 'unable'
+        ]
+    
+        # Best practice keywords
+        practice_keywords = [
+            'best practice', 'should', 'recommend', 'advice',
+            'approach', 'strategy', 'optimal', 'better way'
+        ]
+    
+        # Check for each type
+        if any(word in query_lower for word in config_keywords):
+            return 'configuration'
+        elif any(word in query_lower for word in trouble_keywords):
+            return 'troubleshooting'
+        elif any(word in query_lower for word in practice_keywords):
+            return 'best_practices'
+        else:
+            return 'general'
+        
     def _build_graph(self):
         """Build the LangGraph workflow"""
         workflow = StateGraph(AgentState)
@@ -57,24 +89,22 @@ class ERPAgent:
         """Generate response using LLM with retrieved context"""
         context = state["context"]
         query = state["messages"][-1].content
-        
-        # Create system message with context
-        system_msg = f"""You are an expert Infor ERP implementation consultant. 
-Use the following context from the knowledge base to answer the user's question.
-If the context doesn't contain enough information, say so and provide general guidance based on best practices.
-
-Context:
-{context}
-"""
-        
+    
+        # Classify query type
+        query_type = self.classify_query_type(query)
+        print(f"Query classified as: {query_type}")
+    
+        # Build context-aware system prompt
+        system_prompt = build_full_prompt(query_type, context)
+    
         # Generate response
         messages = [
-            SystemMessage(content=system_msg),
+            SystemMessage(content=system_prompt),
             HumanMessage(content=query)
         ]
-        
+    
         response = self.llm.invoke(messages)
-        
+    
         return {"messages": [response]}
     
     # Update the run method in ERPAgent class:
