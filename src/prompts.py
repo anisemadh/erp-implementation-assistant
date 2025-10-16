@@ -1,3 +1,5 @@
+
+from few_shot_examples import get_examples_by_type, format_examples_for_prompt
 """
 Prompt templates for ERP Assistant
 Organized by query type and purpose
@@ -132,13 +134,19 @@ def get_query_type_prompt(query_type: str) -> str:
     return prompts.get(query_type, GENERAL_PROMPT)
 
 def build_full_prompt(query_type: str, context: str) -> str:
-    """Build complete system prompt with context"""
+    """Build complete system prompt with context and examples"""
+    # Get relevant examples
+    examples = get_examples_by_type(query_type)
+    examples_text = format_examples_for_prompt(examples)
+    
     return f"""{get_base_system_prompt()}
 
 {get_query_type_prompt(query_type)}
 
+{examples_text}
+
 CONTEXT FROM KNOWLEDGE BASE:
 {context}
 
-Remember: Base your response primarily on the context provided. If the context doesn't fully answer the question, acknowledge this and provide general M3 guidance.
+Remember: Base your response primarily on the context provided. Use the examples above as a guide for response quality and structure. If the context doesn't fully answer the question, acknowledge this and provide general M3 guidance.
 """
