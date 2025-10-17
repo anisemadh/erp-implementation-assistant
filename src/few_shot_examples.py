@@ -131,7 +131,165 @@ CONFIGURATION_EXAMPLES = [
 - PPS200: Supplier PO settings
 - PPS001: Supplier master (approval workflow per supplier)
 - PPS300: PO Receipt (test receiving)'''
-    }
+    },
+    {
+        'question': 'How do I set up a new customer?',
+        'answer': '''**Primary Program:** CRS610 - Customer. Open
+
+**Prerequisites:**
+- Company division structure defined
+- Payment terms configured (CRS010)
+- Currency codes active
+- Credit management policies established
+
+---
+
+**Step-by-Step Customer Setup:**
+
+**1. Create Basic Customer Record (CRS610)**
+
+**Navigation:** Main Menu > Customer Relations > Customer > Open
+
+**Panel A: Basic Information**
+- **CUNO (Customer Number):** Enter unique ID or leave blank for auto-number
+- **CUNM (Customer Name):** Full legal name
+- **CUA1-CUA4 (Address):** Complete address lines
+- **TOWN (City)**, **ECAR (State)**, **PONO (Postal Code)**
+- **CSCD (Country Code):** 2-character ISO code
+
+**Panel B: Communication**
+- **PHNO (Phone Number)**
+- **TFNO (Fax)**, **MAIL (Email)**
+- **YREF (Your Reference):** Primary contact name
+
+**2. Financial Settings (CRS610, Panel E)**
+
+**Credit Management:**
+- **CRLM (Credit Limit):** Maximum exposure allowed
+- **BLCD (Credit Block):** 
+  - 0 = No block
+  - 1 = Warning only
+  - 2 = Hard block
+- **PYCD (Payment Terms):** From CRS010 (e.g., NET30, NET60)
+- **CUCD (Currency):** Customer's billing currency
+
+**Payment Information:**
+- **VRNO (VAT Number):** Tax registration number
+- **TEPY (Payment Method):** Check, Wire, ACH, etc.
+- **BKID (Bank Account):** If ACH/wire payments
+
+**3. Order Entry Defaults (CRS610, Panel F)**
+
+**Shipping & Delivery:**
+- **WHLO (Warehouse):** Default fulfillment warehouse
+- **MODL (Delivery Method):** Shipping method
+- **TEDL (Delivery Terms):** FOB, CIF, etc.
+- **FWHL (Forward Agent):** Freight forwarder if applicable
+
+**Pricing:**
+- **PRRF (Price List):** Link to customer's price list (from OIS002)
+- **CUCD (Currency):** Must match price list currency
+- **DISY (Discount %):** Customer-level discount if applicable
+
+**Order Processing:**
+- **ORTY (Order Type):** Default order type from OIS010
+- **SMCD (Salesperson):** Assign sales rep
+- **CUOR (Customer Order Required):** Y/N for PO requirement
+
+**4. Invoice & Statement Settings (CRS610, Panel G)**
+
+**Invoicing:**
+- **IVRF (Invoice Reference):** Customer's AP contact
+- **DUDT (Due Date Basis):** Invoice date, delivery date, etc.
+- **INVM (Invoice Method):** Per line, per delivery, consolidated
+
+**Statements:**
+- **STMT (Statement):** Y/N for monthly statements
+- **Language Code:** For documents
+
+**5. Create Ship-To Addresses (CRS624)**
+
+**If customer has multiple delivery locations:**
+- Go to CRS624 - Customer Address. Open
+- Create ADRT=1 (Ship-To) addresses
+- Link to main customer
+- Each can have unique warehouse, delivery method
+
+**6. Connect to Price List (OIS002)**
+
+**Program:** OIS002 - Price List. Connect Customer
+
+**Steps:**
+- Enter CUNO (Customer Number)
+- Enter PRRF (Price List)
+- Set Start Date and End Date
+- Priority if multiple lists (1=highest)
+
+**Without this, customer orders won't get pricing!**
+
+---
+
+**Testing the Setup:**
+
+**Test 1: Credit Check**
+1. Go to CRS677 - Customer Credit Information
+2. Enter customer number
+3. Verify credit limit, current balance appear correctly
+
+**Test 2: Create Order**
+1. Go to OIS100 - Customer Order. Open
+2. F3 to create new order
+3. Enter new customer number
+4. Verify all defaults populate:
+   - Warehouse (WHLO)
+   - Order type (ORTY)
+   - Delivery method (MODL)
+   - Payment terms (PYCD)
+5. Add an order line
+6. Verify pricing populates from price list
+
+**Test 3: Invoice Generation**
+1. Complete the test order through shipping
+2. Generate invoice in OIS350
+3. Verify invoice format correct
+4. Check GL postings in GLS120
+
+---
+
+**Common Mistakes:**
+
+❌ **Not connecting to price list (OIS002)**
+   → Orders have no pricing, manual entry required
+
+❌ **Mismatched currencies**
+   → Customer currency ≠ price list currency = no pricing
+
+❌ **No payment terms set**
+   → Invoices have no due date, causes AR issues
+
+❌ **Missing warehouse default**
+   → Every order requires manual warehouse selection
+
+❌ **Credit limit = 0**
+   → Customer blocked from ordering
+
+❌ **Wrong delivery terms**
+   → Freight costs calculated incorrectly
+
+❌ **Not testing order creation**
+   → Discover problems when real order placed
+
+---
+
+**Related Programs:**
+- CRS610: Customer master (main setup)
+- CRS624: Ship-to addresses
+- OIS002: Price list connection
+- CRS010: Payment terms configuration
+- CRS677: Credit information display
+- OIS100: Test order creation
+- GLS120: GL review for testing'''
+    },
 ]
 
 TROUBLESHOOTING_EXAMPLES = [
@@ -408,7 +566,219 @@ Pick tickets split when delivery consolidation rules are not met. M3 creates sep
 - OIS100: Order line details
 - OIS010: Order type consolidation settings
 - CRS610: Customer master defaults'''
-    }
+    },
+    {
+        'question': 'Why can\'t I release a customer order?',
+        'answer': '''**Diagnostic Process:**
+
+Customer orders must pass multiple validations before releasing from status 15 (Entry) to 20 (Released). Follow these checks in order:
+
+---
+
+**1. Check Order Status (OIS100)**
+
+**Program:** OIS100 - Customer Order. Open
+
+**Current Status Check:**
+- Look at **ORST (Order Status)** field
+- If already 20+ → Order IS released (check if looking at wrong order)
+- If 15 or below → Continue diagnostics
+- If 88/99 → Order cancelled, cannot release
+
+**Status meanings:**
+- 05 = Preliminary  
+- 15 = Order entry
+- 20 = Released (target)
+- 33 = Allocated
+- 66 = Delivered
+
+---
+
+**2. Credit Hold Check (Most Common Issue)**
+
+**Check A: Order Header (OIS100)**
+- Look for **CUCD (Credit Hold)** indicator
+- If "1" or "2" → Order on credit hold
+
+**Check B: Customer Credit Status (CRS677)**
+- Go to CRS677 - Customer Credit Information
+- Enter customer number
+- Review:
+  - **Credit Limit vs Current Balance**
+  - **Overdue Invoices**
+  - **Credit Block Code** (from CRS610)
+  
+**Credit Hold Types:**
+- **Soft Hold (Warning):** Can be overridden with authority
+- **Hard Hold (Block):** Must resolve credit issue first
+
+**Resolution for Credit Hold:**
+1. If customer legitimately over limit:
+   - Customer must pay down balance
+   - OR get approval to increase limit in CRS610
+2. If old invoices causing issue:
+   - Process payments in ARS100
+   - Update credit status
+3. If hold is error:
+   - Override in OIS100 with proper authority
+   - Document reason for override
+
+---
+
+**3. Incomplete Order Line Data**
+
+**Check in OIS100 - Order Lines:**
+
+**Required Fields per Line:**
+- **ITNO (Item Number):** Must be valid, active item
+- **ORQT (Order Quantity):** Must be > 0
+- **WHLO (Warehouse):** Must be specified
+- **DWDZ (Delivery Date):** Must be valid date
+- **SAPR (Sales Price):** Must have price (unless $0 items allowed)
+
+**Common Line Issues:**
+- ❌ Item not set up for warehouse → Add in MMS001 Panel E14
+- ❌ Negative quantity → Correct to positive
+- ❌ No price and pricing required → Fix pricing setup
+- ❌ Past delivery date → Update to future date
+
+**How to Check:**
+- Use Option 5=Display on each line
+- Look for error messages in message line
+- Check MNS205 for detailed error logs
+
+---
+
+**4. Missing Required Order Header Data**
+
+**Check Order Header Fields:**
+- **CUNO (Customer Number):** Must be valid
+- **ORTP (Order Type):** Must be configured in OIS010
+- **CUOR (Customer PO):** May be required by order type/customer
+- **PYNO (Payment Terms):** Required for invoicing
+- **MODL (Delivery Method):** Required for shipping
+
+**Validation:**
+- Each field should have value (not blank if required)
+- Values must exist in master files
+- Check order type requirements in OIS010
+
+---
+
+**5. Authorization/Authority Issues**
+
+**User Authority Check:**
+- Some order types require release approval
+- Check CRS610 - User Authority
+- User may not have authority level to release this order
+  
+**Order Type Restrictions:**
+- Check OIS010 - Order Type settings
+- Some types require approval workflow
+- May need higher authority for dollar amount
+
+**Resolution:**
+- Have authorized user release order
+- OR request temporary authority increase
+- OR change order type if appropriate
+
+---
+
+**6. Inventory/Allocation Blocks**
+
+**While not preventing release, may want to check:**
+- Item availability (MMS060)
+- Allocation settings (OIS010)
+- Demand time fence issues
+
+**These typically don't block release, but block allocation after release.**
+
+---
+
+**7. Configuration/System Issues**
+
+**Order Type Configuration:**
+- Go to OIS010 - Customer Order Type
+- Verify order type is active
+- Check if special workflow configured
+- Review start status settings
+
+**Customer Configuration:**
+- Verify customer active (not blocked)
+- Check customer order block codes
+- Review customer status in CRS610
+
+---
+
+**Step-by-Step Resolution Process:**
+
+**Step 1: Identify the Block**
+1. Open order in OIS100
+2. Try to change status to 20 (Option 2=Change, ORST=20)
+3. Note specific error message
+4. Check MNS205 for detailed error
+
+**Step 2: Address Root Cause**
+- Credit hold → Resolve credit
+- Missing data → Complete required fields  
+- Authority → Get proper approval
+- Item issue → Fix item/warehouse setup
+
+**Step 3: Retry Release**
+1. After fixing issue, return to OIS100
+2. Option 2=Change
+3. Change ORST to 20
+4. Press Enter
+5. Verify status changes to 20
+
+**Step 4: Verify Order Flows**
+- Check if allocation triggered (ORST=33)
+- Verify downstream processes work
+- Monitor for additional issues
+
+---
+
+**Common Causes by Frequency:**
+
+1. **Credit hold (40%)** → Check CRS677, resolve credit
+2. **Missing price (25%)** → Fix OIS002/OIS017 pricing
+3. **Incomplete line data (15%)** → Add missing warehouse/dates
+4. **User authority (10%)** → Get approval or higher auth
+5. **Item setup issue (5%)** → Fix MMS001 configuration
+6. **Other config (5%)** → Review order type, customer setup
+
+---
+
+**Prevention Strategies:**
+
+**At Order Entry:**
+- Use order templates with defaults
+- Configure automatic validations
+- Set up customer masters completely
+- Maintain price lists proactively
+
+**System Configuration:**
+- Set sensible credit limits
+- Configure warning messages for issues
+- Use order types appropriately
+- Train users on requirements
+
+**Monitoring:**
+- Regular credit review meetings
+- Dashboard for stuck orders
+- Alert for orders >24hrs in status 15
+
+---
+
+**Related Programs:**
+- OIS100: Order management
+- CRS677: Credit information
+- CRS610: Customer master and authority
+- OIS010: Order type configuration
+- MNS205: Error message log
+- MMS001: Item master (if item issues)
+- ARS100: Payment processing (if credit hold)'''
+    },
 ]
 
 BEST_PRACTICES_EXAMPLES = [
@@ -549,7 +919,280 @@ BEST_PRACTICES_EXAMPLES = [
 - MMS055: Allocation priority rules
 - OIS100: Manual allocation override (Option 41)
 - System parameter ALUR: Allocation rules'''
-    }
+    },{
+        'question': 'What\'s the best way to handle backordered items?',
+        'answer': '''**Recommendation: Multi-Layered Backorder Strategy**
+
+Backorders require different handling depending on item characteristics, customer expectations, and inventory policies. Here's a comprehensive approach:
+
+---
+
+## **Strategy 1: Prevention (Best Approach)**
+
+**Objective:** Minimize backorders through proactive inventory management
+
+**Tactics:**
+
+**1. Safety Stock Optimization**
+- Calculate safety stock based on lead time variability
+- Use MMS002 - Item Warehouse, Panel E1
+- Set **SSQT (Safety Stock):** Based on demand variability
+- Formula: Safety Stock = (Max Daily Usage × Max Lead Time) - (Avg Daily Usage × Avg Lead Time)
+
+**2. Reorder Point Management**
+- Set **REQT (Reorder Point)** to trigger before stockout
+- REQT = (Avg Daily Demand × Lead Time) + Safety Stock
+- Review monthly, adjust seasonally
+
+**3. Demand Forecasting**
+- Use MMS100 for forecast maintenance
+- Review forecast accuracy (MMS170)
+- Update forecasts based on actual demand trends
+- Consider seasonal patterns
+
+**4. Supplier Reliability Programs**
+- Track supplier on-time delivery (PPS360)
+- Rate suppliers on lead time consistency
+- Maintain backup suppliers for critical items
+- Negotiate VMI or consignment for key items
+
+---
+
+## **Strategy 2: Allow Backordering (When Appropriate)**
+
+**When to Allow Backorders:**
+✓ Long-term customer relationships
+✓ Custom/made-to-order items
+✓ Items with predictable replenishment
+✓ Customer willing to wait
+✓ Competitor lead times similar
+
+**Configuration:**
+
+**A. Customer-Level Backorder Setting**
+- **Program:** CRS610 - Customer. Open
+- Panel F (Order Entry)
+- **BKOD (Backorder):**
+  - 1 = Allow backorders
+  - 2 = No backorders (substitute or cancel)
+  - 3 = Partial shipment allowed
+
+**B. Item-Level Backorder Control**
+- **Program:** MMS001 - Item. Open
+- Panel E14 (Item/Warehouse)
+- **BKOD (Backorder Indicator):** Override customer setting
+- Use for items that should NEVER backorder (perishables, etc.)
+
+**C. Order Type Backorder Behavior**
+- **Program:** OIS010 - Customer Order Type
+- Configure backorder handling per order type
+- Rush orders → No backorders
+- Standard orders → Allow backorders
+
+---
+
+## **Strategy 3: Active Backorder Management**
+
+**Monitor Backorders Daily:**
+
+**Program:** OIS281 - Customer Order Line. Display Backorder
+
+**Process:**
+1. Review all backorder lines daily
+2. Check expected receipt dates
+3. Contact customers proactively with ETAs
+4. Prioritize by customer importance
+
+**Automatic Allocation from Receipts:**
+
+**Configuration:**
+- Set up automatic backorder allocation
+- When inventory received, system auto-allocates to backorders
+- Priority based on:
+  - Order date (FIFO)
+  - Customer priority code
+  - Promised delivery date
+
+**Program Flow:**
+1. PO received in PPS300
+2. Inventory updated in MMS100
+3. System checks backorders (OIS281)
+4. Auto-allocation runs
+5. Customer notified (optional workflow)
+
+---
+
+## **Strategy 4: Communication & Customer Service**
+
+**Proactive Communication:**
+
+**At Order Entry:**
+- If item backordered, inform customer immediately
+- Provide ETA based on next expected receipt
+- Offer alternatives if available
+- Document in order notes (OIS100)
+
+**During Backorder Period:**
+- Weekly updates if backorder >1 week
+- Immediate notification when item received
+- Expedite options if customer willing to pay
+
+**Automation:**
+- Set up email alerts when items allocated
+- Dashboard for CSRs showing backorder status
+- Integration with CRM for customer communication
+
+---
+
+## **Strategy 5: Alternative Fulfillment Options**
+
+**Option A: Substitute Items**
+- Maintain substitution rules in MMS001
+- Offer higher-value substitute at same price
+- Get customer approval for substitution
+- System: Use item substitution in OIS100
+
+**Option B: Partial Shipments**
+- Ship available quantity immediately
+- Backorder remaining quantity
+- Configure in order type (OIS010)
+- Customer must allow partial shipments (CRS610)
+
+**Option C: Cross-Warehouse Fulfillment**
+- Check other warehouse availability (MMS060)
+- Transfer stock if economically viable
+- Use MMS100 for transfers
+- Update order warehouse in OIS100
+
+**Option D: Drop Shipment**
+- Purchase from supplier, ship direct to customer
+- Use drop ship order type
+- Customer charged full price
+- Avoid carrying inventory
+
+---
+
+## **Strategy 6: Prioritization Rules**
+
+**When inventory limited, prioritize allocation:**
+
+**Priority Factors:**
+1. **Customer tier** (A/B/C classification)
+2. **Order date** (FIFO typically)
+3. **Promised ship date**
+4. **Order value**
+5. **Product margin**
+6. **Contract obligations** (blanket POs)
+
+**Configuration:**
+- Set up in MMS055 - Allocation Priority
+- Define priority codes per customer (CRS610)
+- System respects priority during allocation
+- Manual override available for exceptions
+
+---
+
+## **Implementation Roadmap**
+
+**Phase 1: Baseline (Week 1-2)**
+- Identify current backorder rate
+- Analyze root causes (supplier, forecast, safety stock)
+- Set KPI targets (backorder rate <2%)
+
+**Phase 2: Configuration (Week 3-4)**
+- Configure customer backorder settings (CRS610)
+- Set item backorder controls (MMS001)
+- Define order type behaviors (OIS010)
+- Set up automatic allocation
+
+**Phase 3: Process (Week 5-6)**
+- Train CSRs on backorder communication
+- Implement daily backorder review meeting
+- Create escalation procedures
+- Document standard responses
+
+**Phase 4: Optimization (Ongoing)**
+- Review safety stock monthly
+- Adjust reorder points seasonally
+- Track backorder metrics
+- Supplier performance reviews
+
+---
+
+## **Key Metrics to Track**
+
+**Backorder KPIs:**
+- **Backorder Rate:** (Backordered Lines / Total Lines) × 100
+- **Backorder Age:** Days in backorder status
+- **Fill Rate:** (Filled Lines / Total Lines) × 100
+- **Perfect Order Rate:** Orders shipped complete on time
+
+**Targets:**
+- Backorder Rate: <2%
+- Avg Backorder Age: <7 days
+- Fill Rate: >98%
+- Perfect Order Rate: >95%
+
+---
+
+## **Common Mistakes to Avoid**
+
+❌ **"We'll just stock more of everything"**
+   → Ties up cash, increases obsolescence risk
+
+❌ **No communication to customer**
+   → Customer discovers backorder at expected delivery time
+
+❌ **Treating all backorders equally**
+   → Rush orders get same treatment as standard
+
+❌ **Manual backorder allocation**
+   → Errors, delays, priority issues
+
+❌ **No root cause analysis**
+   → Keep getting same items backordered repeatedly
+
+❌ **Over-promising unrealistic dates**
+   → Better to under-promise, over-deliver
+
+---
+
+## **Decision Matrix**
+
+| Item Type | Strategy | Backorder Policy | Priority |
+|-----------|----------|------------------|----------|
+| High volume, predictable | Prevention | Allow if <7 days | FIFO |
+| Custom/MTO | Allow backorder | Always allow | Order date |
+| Low volume, erratic | Substitution | Avoid backorder | Customer tier |
+| Perishable | No backorder | Never allow | N/A |
+| High margin | Stock adequately | Rare backorders | Revenue |
+| Commodity | Multi-warehouse | Allow, quick fill | Standard |
+
+---
+
+## **Bottom Line**
+
+**Best practice is layered:**
+
+1. **Prevent** backorders through proper inventory management (80% solution)
+2. **Allow** strategic backorders where appropriate (15% of cases)
+3. **Manage** backorders actively with communication (5% exceptions)
+4. **Learn** from backorders to improve forecasting and stocking
+
+**The goal isn't zero backorders** (too expensive), but **managed backorders with customer satisfaction** maintained through communication and quick resolution.
+
+---
+
+**Related Programs:**
+- OIS281: Backorder line display
+- CRS610: Customer backorder settings
+- MMS001: Item backorder control
+- OIS010: Order type configuration
+- MMS055: Allocation priority
+- MMS002: Safety stock and reorder point
+- PPS360: Supplier performance'''
+    },
+
 ]
 
 def get_examples_by_type(query_type: str):
