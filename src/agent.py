@@ -6,6 +6,7 @@ import operator
 from vector_store import load_vector_store
 from dotenv import load_dotenv
 from prompts import build_full_prompt
+from query_enhancer import enhance_query
 
 load_dotenv()
 
@@ -69,20 +70,22 @@ class ERPAgent:
         return workflow.compile()
     
     def retrieve_context(self, state: AgentState):
-        """Retrieve relevant context from vector store"""
+        """Enhanced retrieval with query expansion"""
         query = state["messages"][-1].content
-    
-        # Search for relevant documents
-        docs = self.vectorstore.similarity_search(query, k=5)
-    
-        # Combine retrieved documents into context
-        context = "\n\n".join([doc.page_content for doc in docs])
-    
-        print(f"Retrieved {len(docs)} relevant documents")
-        print("\nRetrieved context preview:")  # ADD THIS
-        print(context[:500])  # ADD THIS - shows first 500 chars
-        print("...\n")  # ADD THIS
-    
+        
+        # Enhance query with M3 terminology
+        enhanced_query = enhance_query(query)
+        print(f"\nOriginal query: {query}")
+        print(f"Enhanced query: {enhanced_query}\n")
+        
+        # Search with enhanced query
+        docs = self.vectorstore.similarity_search(enhanced_query, k=5)
+        
+        context = "\n\n".join([
+            f"[Source: {doc.metadata.get('source', 'Unknown')}]\n{doc.page_content}"
+            for doc in docs
+        ])
+        
         return {"context": context}
     
     def generate_response(self, state: AgentState):
