@@ -20,6 +20,7 @@ class ERPAgent:
         self.llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
         self.vectorstore = load_vector_store()
         self.graph = self._build_graph()
+    
     def classify_query_type(self, query: str) -> str:
         """Classify query to select appropriate prompt"""
         query_lower = query.lower()
@@ -51,7 +52,31 @@ class ERPAgent:
             return 'best_practices'
         else:
             return 'general'
+    
+    def detect_relevant_modules(self, query: str) -> list:
+        """Detect which M3 modules are relevant to the query"""
+        query_lower = query.lower()
+        relevant_modules = []
         
+        # Module keywords
+        module_keywords = {
+            'OIS': ['customer order', 'sales order', 'order type', 'ois', 'order entry', 'invoice customer'],
+            'PPS': ['purchase order', 'po ', 'purchasing', 'supplier', 'vendor', 'pps', 'procurement', 'receive', 'receipt'],
+            'MMS': ['inventory', 'item', 'warehouse', 'stock', 'mms', 'allocation', 'on hand', 'product'],
+            'CRS': ['customer master', 'customer setup', 'crs', 'credit', 'customer relations'],
+            'MWS': ['delivery', 'picking', 'shipment', 'mws', 'dispatch', 'ship'],
+            'ARS': ['invoice', 'accounts receivable', 'ars', 'billing'],
+            'APS': ['accounts payable', 'aps', 'vendor invoice'],
+        }
+        
+        # Check query for module indicators
+        for module, keywords in module_keywords.items():
+            if any(keyword in query_lower for keyword in keywords):
+                relevant_modules.append(module)
+        
+        # If no specific module detected, return empty (search all)
+        return relevant_modules
+    
     def _build_graph(self):
         """Build the LangGraph workflow"""
         workflow = StateGraph(AgentState)
@@ -70,17 +95,34 @@ class ERPAgent:
         return workflow.compile()
     
     def retrieve_context(self, state: AgentState):
-        """Enhanced retrieval with query expansion"""
+        """Enhanced retrieval with query expansion and metadata filtering"""
         query = state["messages"][-1].content
         
-        # Enhance query with M3 terminology
+        # 1. Enhance query with M3 terminology
         enhanced_query = enhance_query(query)
-        print(f"\nOriginal query: {query}")
-        print(f"Enhanced query: {enhanced_query}\n")
         
-        # Search with enhanced query
-        docs = self.vectorstore.similarity_search(enhanced_query, k=5)
+        # 2. Detect relevant modules
+        relevant_modules = self.detect_relevant_modules(query)
         
+        # 3. Search with metadata filtering
+        if relevant_modules:
+            docs = agent.vectorstore.similarity_search(enhanced_query, k=8)
+            
+            # Post-filter by modules
+            filtered_docs = []
+            for doc in docs:
+                module_str = doc.metadata.get('module_str', '')
+                doc_modules = module_str.split(',') if module_str else []
+                if any(module in doc_modules for module in relevant_modules):
+                    filtered_docs.append(doc)
+            
+            docs = filtered_docs[:5]
+            print(f"✓ Filtered to {len(docs)} chunks from modules: {', '.join(relevant_modules)}")
+        else:
+            docs = agent.vectorstore.similarity_search(enhanced_query, k=5)
+            print(f"✓ Retrieved {len(docs)} chunks (all modules)")
+        
+        # 4. Build context
         context = "\n\n".join([
             f"[Source: {doc.metadata.get('source', 'Unknown')}]\n{doc.page_content}"
             for doc in docs
@@ -92,25 +134,38 @@ class ERPAgent:
         """Generate response using LLM with retrieved context"""
         context = state["context"]
         query = state["messages"][-1].content
-    
+
         # Classify query type
         query_type = self.classify_query_type(query)
-        print(f"Query classified as: {query_type}")
-    
+        print(f"📋 Query type: {query_type}")
+
         # Build context-aware system prompt
         system_prompt = build_full_prompt(query_type, context)
-    
-        # Generate response
+
+        # Generate response (same as before)
         messages = [
             SystemMessage(content=system_prompt),
             HumanMessage(content=query)
         ]
-    
+
         response = self.llm.invoke(messages)
-    
+
         return {"messages": [response]}
+
+    def generate_response_stream(self, query: str, context: str, query_type: str):
+        """Generate streaming response - for Streamlit"""
+        system_prompt = build_full_prompt(query_type, context)
+        
+        messages = [
+            SystemMessage(content=system_prompt),
+            HumanMessage(content=query)
+        ]
+        
+        # Stream response
+        for chunk in self.llm.stream(messages):
+            if chunk.content:
+                yield chunk.content
     
-    # Update the run method in ERPAgent class:
     def run(self, query: str, conversation_history=None):
         """Run the agent with a query and optional conversation history"""
         if conversation_history is None:
