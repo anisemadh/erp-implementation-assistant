@@ -1,6 +1,11 @@
 import streamlit as st
 from agent import ERPAgent
 import time
+import os
+
+# Load OpenAI API key from Streamlit secrets or environment
+if "OPENAI_API_KEY" in st.secrets:
+    os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
 
 # Page config
 st.set_page_config(
@@ -131,6 +136,6 @@ with st.sidebar:
     ]
     
     for eq in example_questions:
-        if st.button(eq, key=eq):
+        if st.button(eq, key=eq, use_container_width=True):
             st.session_state.messages.append({"role": "user", "content": eq})
             st.rerun()

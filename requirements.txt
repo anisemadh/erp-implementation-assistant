@@ -472,3 +472,13 @@ zict @ file:///Users/builder/cbouss/perseverance-python-buildout/croot/zict_1728
 zipp @ file:///private/var/folders/k1/30mswbxs7r1g6zwn8y4fyt500000gp/T/abs_echurpkwug/croot/zipp_1732630743967/work
 zope.interface @ file:///Users/builder/cbouss/buildout/croot/zope.interface_1735845126058/work
 zstandard @ file:///private/var/folders/k1/30mswbxs7r1g6zwn8y4fyt500000gp/T/abs_a5_i6g4o6n/croot/zstandard_1731356352787/work
+streamlit==1.39.0
+langchain==0.3.7
+langchain-openai==0.2.6
+langchain-community==0.3.5
+langchain-chroma==0.1.4
+chromadb==0.5.20
+openai==1.54.5
+python-dotenv==1.0.1
+pypdf==5.1.0
+langgraph==0.2.45
