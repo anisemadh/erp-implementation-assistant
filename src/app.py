@@ -22,10 +22,40 @@ st.markdown("Ask questions about Infor M3 implementation, configuration, and tro
 
 # Initialize agent
 @st.cache_resource
-def load_agent():
-    return ERPAgent()
 
-agent = load_agent()
+@st.cache_resource
+def load_agent():
+    import os
+    from pathlib import Path
+    
+    # Check if vector store exists
+    vector_store_path = Path("data/chroma_db")
+    
+    if not vector_store_path.exists():
+        st.info("🔨 First-time setup: Building vector store from documentation...")
+        st.warning("⏱️ This will take 15-20 minutes on first deployment. Please wait...")
+        
+        # Create data directory if it doesn't exist
+        os.makedirs("data", exist_ok=True)
+        
+        # Build vector store
+        import sys
+        sys.path.append('src')
+        
+        from vector_store import create_vector_store
+        from ingest_docs import load_all_documents
+        
+        with st.spinner("📚 Loading and processing documents..."):
+            chunks = load_all_documents()
+            st.info(f"Loaded {len(chunks)} document chunks")
+        
+        with st.spinner("🔧 Creating vector store (this takes a while)..."):
+            vectorstore = create_vector_store(chunks)
+        
+        st.success("✅ Vector store created! App is ready to use.")
+        st.balloons()
+    
+    return ERPAgent()
 
 # Initialize chat history
 if "messages" not in st.session_state:
