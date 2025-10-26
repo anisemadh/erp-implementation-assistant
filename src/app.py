@@ -22,11 +22,11 @@ st.markdown("Ask questions about Infor M3 implementation, configuration, and tro
 
 # Initialize agent
 @st.cache_resource
-
-
-@st.cache_resource
 def load_agent():
     return ERPAgent()
+
+# Load agent into variable
+agent = load_agent()
 
 # Initialize chat history
 if "messages" not in st.session_state:
@@ -36,7 +36,7 @@ if "messages" not in st.session_state:
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
-        
+
 # Chat input
 if prompt := st.chat_input("Ask about M3 configuration, troubleshooting, or best practices..."):
     # Add user message to chat history
