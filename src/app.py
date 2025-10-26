@@ -1,14 +1,11 @@
 import streamlit as st
 import os
 
-# IMPORTANT: Load secrets BEFORE importing agent
+# Load API key from Streamlit secrets
 if "OPENAI_API_KEY" in st.secrets:
     os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
-elif "OPENAI_API_KEY" not in os.environ:
-    st.error("⚠️ OpenAI API key not found. Please add it in Streamlit Cloud secrets.")
-    st.stop()
 
-# Now import agent (after setting API key)
+# Import after setting env var
 from agent import ERPAgent
 import time
 
