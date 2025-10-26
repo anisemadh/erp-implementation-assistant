@@ -36,7 +36,7 @@ if "messages" not in st.session_state:
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
-
+        
 # Chat input
 if prompt := st.chat_input("Ask about M3 configuration, troubleshooting, or best practices..."):
     # Add user message to chat history
@@ -46,66 +46,30 @@ if prompt := st.chat_input("Ask about M3 configuration, troubleshooting, or best
     with st.chat_message("user"):
         st.markdown(prompt)
     
-    # Generate assistant response with streaming
+    # Generate assistant response
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
-        full_response = ""
         
-        # Show thinking indicator
-        with st.spinner("🔍 Analyzing query and retrieving context..."):
-            # Step 1: Enhance query
-            from query_enhancer import enhance_query
-            enhanced_query = enhance_query(prompt)
-            
-            # Step 2: Detect modules
-            relevant_modules = agent.detect_relevant_modules(prompt)
-            
-            # Step 3: Retrieve context
-            if relevant_modules:
-                docs = agent.vectorstore.similarity_search(enhanced_query, k=8)
+        with st.spinner("🔍 Thinking..."):
+            try:
+                # Use the agent to get response
+                response, messages = agent.run(prompt, st.session_state.get("conversation_history", []))
                 
-                # Filter by modules
-                filtered_docs = []
-                for doc in docs:
-                    module_str = doc.metadata.get('module_str', '')
-                    doc_modules = module_str.split(',') if module_str else []
-                    if any(module in doc_modules for module in relevant_modules):
-                        filtered_docs.append(doc)
-                docs = filtered_docs[:5]
-            else:
-                docs = agent.vectorstore.similarity_search(enhanced_query, k=5)
-            
-            # Build context
-            context = "\n\n".join([
-                f"[Source: {doc.metadata.get('source', 'Unknown')}]\n{doc.page_content}"
-                for doc in docs
-            ])
-            
-            # Classify query
-            query_type = agent.classify_query_type(prompt)
-        
-        # Show generating indicator with module info
-        status_text = "💭 Generating response"
-        if relevant_modules:
-            status_text += f" (Modules: {', '.join(relevant_modules)})"
-        st.caption(status_text)
-        
-        # Stream response
-        try:
-            for chunk in agent.generate_response_stream(prompt, context, query_type):
-                full_response += chunk
-                message_placeholder.markdown(full_response + "▌")
-            
-            # Final response without cursor
-            message_placeholder.markdown(full_response)
-            
-        except Exception as e:
-            error_msg = f"❌ Error generating response: {str(e)}"
-            message_placeholder.error(error_msg)
-            full_response = error_msg
+                # Display response
+                message_placeholder.markdown(response)
+                
+                # Update conversation history
+                if "conversation_history" not in st.session_state:
+                    st.session_state.conversation_history = []
+                st.session_state.conversation_history = messages
+                
+            except Exception as e:
+                error_msg = f"❌ Error: {str(e)}"
+                message_placeholder.error(error_msg)
+                response = error_msg
     
     # Add assistant response to chat history
-    st.session_state.messages.append({"role": "assistant", "content": full_response})
+    st.session_state.messages.append({"role": "assistant", "content": response})
 
 # Sidebar with info
 with st.sidebar:
