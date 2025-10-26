@@ -1,13 +1,28 @@
 import streamlit as st
 import os
 
-# Load API key from Streamlit secrets
+# Debug: Check if secrets exist
+st.write("DEBUG: Checking secrets...")
 if "OPENAI_API_KEY" in st.secrets:
+    st.write("✅ API key found in secrets")
     os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
+    st.write(f"✅ Set in environment: {os.environ.get('OPENAI_API_KEY')[:10]}...")
+else:
+    st.error("❌ OPENAI_API_KEY not found in Streamlit secrets!")
+    st.stop()
 
-# Import after setting env var
+# Verify it's in environment
+if not os.getenv("OPENAI_API_KEY"):
+    st.error("❌ API key not in environment after setting!")
+    st.stop()
+
+st.write("✅ API key verified in environment")
+
+# Now import agent
 from agent import ERPAgent
 import time
+
+st.write("✅ Imports successful")
 
 # Page config
 st.set_page_config(
