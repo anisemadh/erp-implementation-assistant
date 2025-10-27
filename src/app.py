@@ -1,35 +1,23 @@
 import streamlit as st
 import os
 
-# Debug: Check if secrets exist
-st.write("DEBUG: Checking secrets...")
-if "OPENAI_API_KEY" in st.secrets:
-    st.write("✅ API key found in secrets")
-    os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
-    st.write(f"✅ Set in environment: {os.environ.get('OPENAI_API_KEY')[:10]}...")
-else:
-    st.error("❌ OPENAI_API_KEY not found in Streamlit secrets!")
-    st.stop()
-
-# Verify it's in environment
-if not os.getenv("OPENAI_API_KEY"):
-    st.error("❌ API key not in environment after setting!")
-    st.stop()
-
-st.write("✅ API key verified in environment")
-
-# Now import agent
-from agent import ERPAgent
-import time
-
-st.write("✅ Imports successful")
-
-# Page config
+# Page config MUST be first Streamlit command
 st.set_page_config(
     page_title="ERP Assistant",
     page_icon="🤖",
     layout="wide"
 )
+
+# Now handle API key (after page config)
+if "OPENAI_API_KEY" in st.secrets:
+    os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
+elif "OPENAI_API_KEY" not in os.environ:
+    st.error("⚠️ OpenAI API key not found. Please add it in Streamlit Cloud secrets.")
+    st.stop()
+
+# Import agent (after setting API key)
+from agent import ERPAgent
+import time
 
 # Title
 st.title("🤖 ERP Implementation Assistant")
@@ -40,8 +28,9 @@ st.markdown("Ask questions about Infor M3 implementation, configuration, and tro
 def load_agent():
     return ERPAgent()
 
-# Load agent into variable
 agent = load_agent()
+
+# Rest of your app continues...
 
 # Initialize chat history
 if "messages" not in st.session_state:
