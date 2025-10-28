@@ -113,7 +113,7 @@ class ERPAgent:
         
         # 3. Search with metadata filtering
         if relevant_modules:
-            docs = agent.vectorstore.similarity_search(enhanced_query, k=8)
+            docs = self.vectorstore.similarity_search(enhanced_query, k=8)
             
             # Post-filter by modules
             filtered_docs = []
@@ -126,7 +126,7 @@ class ERPAgent:
             docs = filtered_docs[:5]
             print(f"✓ Filtered to {len(docs)} chunks from modules: {', '.join(relevant_modules)}")
         else:
-            docs = agent.vectorstore.similarity_search(enhanced_query, k=5)
+            docs = self.vectorstore.similarity_search(enhanced_query, k=5)
             print(f"✓ Retrieved {len(docs)} chunks (all modules)")
         
         # 4. Build context
