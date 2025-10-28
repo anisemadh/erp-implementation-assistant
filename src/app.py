@@ -29,14 +29,24 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Chat input
-if prompt := st.chat_input("Ask about M3 configuration, troubleshooting, or best practices..."):
-    # Add user message to chat history
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    
-    # Display user message
-    with st.chat_message("user"):
-        st.markdown(prompt)
+# Check for queued query from example buttons
+prompt = None
+from_example = False
+if "process_query" in st.session_state:
+    prompt = st.session_state.process_query
+    from_example = True
+    del st.session_state.process_query
+else:
+    prompt = st.chat_input("Ask about M3 configuration, troubleshooting, or best practices...")
+
+# Process query (either from chat input or example button)
+if prompt:
+    # Add user message to chat history (only if not from example button, as it's already added)
+    if not from_example:
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        # Display user message (only for chat input, example messages already displayed in history)
+        with st.chat_message("user"):
+            st.markdown(prompt)
     
     # Generate assistant response with streaming
     with st.chat_message("assistant"):
@@ -133,4 +143,5 @@ with st.sidebar:
     for eq in example_questions:
         if st.button(eq, key=eq):
             st.session_state.messages.append({"role": "user", "content": eq})
+            st.session_state.process_query = eq
             st.rerun()
