@@ -27,6 +27,7 @@ class ERPAgent:
         self.llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
         self.vectorstore = load_vector_store()
         self.graph = self._build_graph()
+        self.last_sources = []  # Track sources from last query
     
     def classify_query_type(self, query: str) -> str:
         """Classify query to select appropriate prompt"""
@@ -135,6 +136,16 @@ class ERPAgent:
             for doc in docs
         ])
         
+        # Store sources for later retrieval
+        self.last_sources = [
+            {
+                'source': doc.metadata.get('source', 'Unknown'),
+                'module': doc.metadata.get('module_str', 'Unknown'),
+                'doc_type': doc.metadata.get('doc_type', 'Unknown')
+            } 
+            for doc in docs
+        ]
+        
         return {"context": context}
     
     def generate_response(self, state: AgentState):
@@ -185,6 +196,10 @@ class ERPAgent:
         
         result = self.graph.invoke(initial_state)
         return result["messages"][-1].content, result["messages"]
+    
+    def get_last_sources(self):
+        """Get sources from the last query"""
+        return self.last_sources
 
 if __name__ == "__main__":
     agent = ERPAgent()

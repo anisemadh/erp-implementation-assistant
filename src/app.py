@@ -77,6 +77,16 @@ if prompt:
             else:
                 docs = agent.vectorstore.similarity_search(enhanced_query, k=5)
             
+            # Store sources for display
+            sources = [
+                {
+                    'source': doc.metadata.get('source', 'Unknown'),
+                    'module': doc.metadata.get('module_str', 'Unknown'),
+                    'doc_type': doc.metadata.get('doc_type', 'Unknown')
+                } 
+                for doc in docs
+            ]
+            
             # Build context
             context = "\n\n".join([
                 f"[Source: {doc.metadata.get('source', 'Unknown')}]\n{doc.page_content}"
@@ -100,6 +110,15 @@ if prompt:
             
             # Final response without cursor
             message_placeholder.markdown(full_response)
+            
+            # Display sources
+            if sources:
+                st.markdown("---")
+                st.markdown(f"📚 **Sources** ({len(sources)} documents)")
+                for i, source in enumerate(sources, 1):
+                    module_info = f" (Module: {source['module']})" if source['module'] != 'Unknown' else ""
+                    doc_type_info = f" [Type: {source['doc_type']}]" if source['doc_type'] != 'Unknown' else ""
+                    st.markdown(f"**{i}.** {source['source']}{module_info}{doc_type_info}")
             
         except Exception as e:
             error_msg = f"❌ Error generating response: {str(e)}"

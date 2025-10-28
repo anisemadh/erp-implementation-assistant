@@ -93,7 +93,7 @@ if __name__ == "__main__":
     from ingest_docs import load_all_documents
     
     # Load and chunk documents
-    chunks = load_all_documents()
+    chunks = load_all_documents("../docs")
     
     # Create vector store
     vectorstore = create_vector_store(chunks)
