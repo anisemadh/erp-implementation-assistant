@@ -14,13 +14,13 @@ def test_search(query):
         print("...")
 
 if __name__ == "__main__":
-    # Test with queries relevant to your Infor knowledge
     test_queries = [
-        "How do I set up Customer Local Exceptions?",
-        "How do you set up a discount model?",
-        "What is the flow for goods receipts for POs",
-        "What are some common mistakes in the order to cash process?",
+        "How do I set up a brand new customer order type?",
+        "How do I set up a purchase order type?",
+        "What are the steps to allocate a customer order?",
+        "How do I receive a PO line?"
     ]
     
     for query in test_queries:
         test_search(query)
+        print("\n" + "="*80 + "\n")

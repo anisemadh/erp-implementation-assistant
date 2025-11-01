@@ -13,6 +13,7 @@ st.set_page_config(
 st.title("🤖 ERP Implementation Assistant")
 st.markdown("Ask questions about Infor M3 implementation, configuration, and troubleshooting.")
 
+
 # Initialize agent
 @st.cache_resource
 def load_agent():

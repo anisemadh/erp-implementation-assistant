@@ -12,8 +12,12 @@ import os
 # Load environment variables (for local) and check for API key
 from dotenv import load_dotenv
 load_dotenv()
-
+# Enable LangSmith tracing
+os.environ["LANGCHAIN_TRACING_V2"] = os.getenv("LANGCHAIN_TRACING_V2", "false")
+if os.getenv("LANGCHAIN_API_KEY"):
+    os.environ["LANGCHAIN_API_KEY"] = os.getenv("LANGCHAIN_API_KEY")
 # Verify API key exists before initialization
+
 if not os.getenv("OPENAI_API_KEY"):
     raise ValueError("OPENAI_API_KEY not found in environment variables")
 

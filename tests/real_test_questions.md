@@ -13,7 +13,7 @@ Will be used for testing and creating few-shot examples.
 6. How do I configure a purchase order type? 
 7. How do I set up a customer? 
 8. How do I set up a supplier?
-9. How do I configure a cusomter order with automatic allocation? 
+9. How do I configure a customer order with automatic allocation? 
 10. How do I set up a customer to allow backorders? 
 11. How do I set up ship method? 
 12. How can I set up consolidated invoicing?
