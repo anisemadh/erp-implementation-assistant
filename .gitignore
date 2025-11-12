@@ -5,5 +5,4 @@ __pycache__/
 *.pyc
 venv/
 .DS_Storevenv/
-data/*.db
 docs/Infor BRE.pdf
