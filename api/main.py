@@ -251,7 +251,7 @@ async def general_exception_handler(request: Request, exc: Exception):
 if __name__ == "__main__":
     import uvicorn
     
-    # Get port from environment or use default
+    # Get port from environment (Render sets this automatically)
     port = int(os.getenv("PORT", 8000))
     
     print(f"""
