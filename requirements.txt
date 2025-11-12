@@ -1,14 +1,32 @@
-streamlit==1.39.0
-langchain==0.3.7
-langchain-openai==0.2.6
-langchain-community==0.3.5
-langchain-chroma==0.1.4
-chromadb==0.5.20
-openai==1.54.5
-python-dotenv==1.0.1
-pypdf==5.1.0
-langgraph==0.2.45
+cd /Users/anassmadh/Documents/ERP-Assistant-Project/erp-implementation-assistant
+
+nano requirements.txt
+```
+
+**Replace the entire file with this:**
+```
+# Core API
 fastapi==0.115.4
 uvicorn[standard]==0.32.0
 pydantic==2.9.2
 python-multipart==0.0.9
+
+# LangChain Core
+langchain==0.3.7
+langchain-openai==0.2.5
+langchain-community==0.3.5
+langchain-chroma==0.1.4
+langgraph==0.2.45
+
+# Vector Store - PIN THESE VERSIONS
+chromadb==0.4.24
+httpx==0.25.2
+httpcore==1.0.2
+
+# Other dependencies
+python-dotenv==1.0.1
+pypdf==5.1.0
+
+# Explicit pins for stability
+numpy<2.0.0
+pydantic-core==2.23.4
