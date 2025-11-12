@@ -3,10 +3,10 @@ from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from langgraph.graph import StateGraph, END
 from typing import TypedDict, Annotated, List
 import operator
-from vector_store import load_vector_store
+from src.vector_store import load_vector_store
 from dotenv import load_dotenv
-from prompts import build_full_prompt
-from query_enhancer import enhance_query
+from src.prompts import build_full_prompt
+from src.query_enhancer import enhance_query
 import os
 
 # Load environment variables (for local) and check for API key

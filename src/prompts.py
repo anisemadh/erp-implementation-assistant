@@ -1,5 +1,5 @@
 
-from few_shot_examples import get_examples_by_type, format_examples_for_prompt
+from src.few_shot_examples import get_examples_by_type, format_examples_for_prompt
 """
 Prompt templates for ERP Assistant
 Organized by query type and purpose

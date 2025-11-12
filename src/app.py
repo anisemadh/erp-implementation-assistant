@@ -1,5 +1,8 @@
 import streamlit as st
-from agent import ERPAgent
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from src.agent import ERPAgent
 import time
 
 # Page config
@@ -57,7 +60,7 @@ if prompt:
         # Show thinking indicator
         with st.spinner("🔍 Analyzing query and retrieving context..."):
             # Step 1: Enhance query
-            from query_enhancer import enhance_query
+            from src.query_enhancer import enhance_query
             enhanced_query = enhance_query(prompt)
             
             # Step 2: Detect modules
