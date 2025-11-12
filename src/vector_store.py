@@ -4,17 +4,29 @@ from dotenv import load_dotenv
 import os
 import time
 from datetime import datetime
-load_dotenv()
 
+load_dotenv()
 
 
 def create_vector_store(chunks, persist_directory="data/chroma_db"):
     """Create and persist vector store in batches with detailed logging"""
     embeddings = OpenAIEmbeddings()
     
+    # DEBUG: Test embeddings first
+    print("\n🔍 Testing embeddings...")
+    test_embed = embeddings.embed_query("test")
+    print(f"✅ Embeddings working! Length: {len(test_embed)}")
+    
+    # DEBUG: Check chunks have content
+    print(f"\n🔍 Checking chunks...")
+    print(f"Total chunks: {len(chunks)}")
+    if chunks:
+        print(f"First chunk preview: {chunks[0].page_content[:100]}...")
+        print(f"First chunk metadata: {chunks[0].metadata}")
+    
     # Process in batches to avoid token limits
-    batch_size = 50  # CHANGED from 50 to 10
-    delay_between_batches = 10  # ADDED: 5 second delay
+    batch_size = 50
+    delay_between_batches = 10
     
     print(f"\n{'='*60}")
     print(f"Starting vector store creation at {datetime.now()}")
@@ -28,8 +40,13 @@ def create_vector_store(chunks, persist_directory="data/chroma_db"):
     start_time = time.time()
     
     try:
+        # DEBUG: Check batch content
+        first_batch = chunks[:batch_size]
+        print(f"🔍 First batch has {len(first_batch)} documents")
+        print(f"🔍 First doc in batch: {first_batch[0].page_content[:50]}...")
+        
         vectorstore = Chroma.from_documents(
-            documents=chunks[:batch_size],
+            documents=first_batch,
             embedding=embeddings,
             persist_directory=persist_directory
         )
@@ -37,6 +54,8 @@ def create_vector_store(chunks, persist_directory="data/chroma_db"):
         print(f"[{datetime.now().strftime('%H:%M:%S')}] ✓ Batch 1 completed in {elapsed:.1f}s\n")
     except Exception as e:
         print(f"ERROR creating initial batch: {e}")
+        import traceback
+        traceback.print_exc()
         raise
     
     # Add remaining chunks in batches
@@ -55,7 +74,7 @@ def create_vector_store(chunks, persist_directory="data/chroma_db"):
             print(f"[{datetime.now().strftime('%H:%M:%S')}] ✓ Batch {batch_num} completed in {elapsed:.1f}s")
             print(f"  Progress: {min(i + batch_size, len(chunks))}/{len(chunks)} chunks ({100*min(i + batch_size, len(chunks))//len(chunks)}%)\n")
             
-            # ADDED: Wait between batches to avoid rate limits
+            # Wait between batches to avoid rate limits
             time.sleep(delay_between_batches)
 
         except Exception as e:
@@ -80,6 +99,7 @@ def create_vector_store(chunks, persist_directory="data/chroma_db"):
     
     return vectorstore
 
+
 def load_vector_store(persist_directory="data/chroma_db"):
     """Load existing vector store"""
     embeddings = OpenAIEmbeddings()
@@ -89,12 +109,13 @@ def load_vector_store(persist_directory="data/chroma_db"):
     )
     return vectorstore
 
+
 if __name__ == "__main__":
     from ingest_docs import load_all_documents
     
     # Load and chunk documents
-    chunks = load_all_documents("../docs")
+    chunks = load_all_documents("docs")  # FIXED: was ../docs
     
     # Create vector store
     vectorstore = create_vector_store(chunks)
-    print("Vector store created successfully!")
+    print("✅ Vector store created successfully!")

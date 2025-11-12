@@ -75,7 +75,7 @@ def load_and_split_documents(file_path):
         modules = detect_module_from_content(chunk.page_content, source_name)
         chunk.metadata['source'] = source_name
         chunk.metadata['doc_type'] = doc_type
-        chunk.metadata['module_str'] = ','.join(modules)  # Only string, not list
+        chunk.metadata['module_str'] = ','.join(modules)  # Only string, not listq
     
     print(f"Created {len(chunks)} chunks from {file_path}")
     
