@@ -1,4 +1,8 @@
-from agent import ERPAgent
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from src.agent import ERPAgent
 from langchain_core.messages import HumanMessage
 
 def main():
@@ -6,7 +10,13 @@ def main():
     print("ERP Implementation Assistant")
     print("="*60)
     
-    agent = ERPAgent()
+    try:
+        agent = ERPAgent()
+        print("✅ Agent loaded successfully!")
+    except Exception as e:
+        print(f"❌ Error loading agent: {e}")
+        return
+    
     conversation_history = []
     
     while True:

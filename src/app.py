@@ -82,14 +82,16 @@ if prompt:
                 docs = agent.vectorstore.similarity_search(enhanced_query, k=5)
             
             # Store sources for display
-            sources = [
-                {
-                    'source': doc.metadata.get('source', 'Unknown'),
-                    'module': doc.metadata.get('module_str', 'Unknown'),
-                    'doc_type': doc.metadata.get('doc_type', 'Unknown')
-                } 
-                for doc in docs
-            ]
+            sources = []
+            if docs:
+                sources = [
+                    {
+                        'source': doc.metadata.get('source', 'Unknown'),
+                        'module': doc.metadata.get('module_str', 'Unknown'),
+                        'doc_type': doc.metadata.get('doc_type', 'Unknown')
+                    } 
+                    for doc in docs
+                ]
             
             # Build context
             context = "\n\n".join([
@@ -116,13 +118,17 @@ if prompt:
             message_placeholder.markdown(full_response)
             
             # Display sources
-            if sources:
+            if sources and len(sources) > 0:
                 st.markdown("---")
                 st.markdown(f"📚 **Sources** ({len(sources)} documents)")
                 for i, source in enumerate(sources, 1):
-                    module_info = f" (Module: {source['module']})" if source['module'] != 'Unknown' else ""
-                    doc_type_info = f" [Type: {source['doc_type']}]" if source['doc_type'] != 'Unknown' else ""
+                    module_info = f" (Module: {source['module']})" if source['module'] and source['module'] != 'Unknown' else ""
+                    doc_type_info = f" [Type: {source['doc_type']}]" if source['doc_type'] and source['doc_type'] != 'Unknown' else ""
                     st.markdown(f"**{i}.** {source['source']}{module_info}{doc_type_info}")
+            else:
+                st.markdown("---")
+                st.markdown("⚠️ **No source documents found**")
+                st.caption("This may indicate that the vector database is empty or the query didn't match any documents.")
             
         except Exception as e:
             error_msg = f"❌ Error generating response: {str(e)}"

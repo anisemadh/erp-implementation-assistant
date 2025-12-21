@@ -29,7 +29,11 @@ class AgentState(TypedDict):
 class ERPAgent:
     def __init__(self):
         self.llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
-        self.vectorstore = load_vector_store()
+        # Use absolute path to ensure correct vector store
+        import os
+        current_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        vectorstore_path = os.path.join(current_dir, "data", "chroma_db")
+        self.vectorstore = load_vector_store(vectorstore_path)
         self.graph = self._build_graph()
         self.last_sources = []  # Track sources from last query
     
